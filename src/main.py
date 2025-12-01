@@ -14,8 +14,6 @@ class RiotUser:
         self.tag = tag
         self.region = region
         self.puuid = puuid
-        # Standardize headers for all requests
-        self.headers = {"X-Riot-Token": RIOT_API_KEY}
 
     @classmethod
     async def create(cls, client: httpx.AsyncClient, name: str, tag: str, region: str):
@@ -25,7 +23,7 @@ class RiotUser:
         url = f"https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
 
         try:
-            response = await client.get(url, headers={"X-Riot-Token": RIOT_API_KEY})
+            response = await client.get(url)
             response.raise_for_status()  # Raises error for 404, 403, 429, etc.
             data = response.json()
             return cls(name, tag, region, data["puuid"])
@@ -37,7 +35,7 @@ class RiotUser:
         url = f"https://{self.region}.api.riotgames.com/lol/match/v5/matches/by-puuid/{self.puuid}/ids"
         params = {"type": "ranked", "start": start, "count": count}
 
-        response = await client.get(url, headers=self.headers, params=params)
+        response = await client.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
@@ -59,7 +57,7 @@ class RiotUser:
     async def _fetch_single_match(self, client: httpx.AsyncClient, match_id):
         url = f"https://{self.region}.api.riotgames.com/lol/match/v5/matches/{match_id}"
         try:
-            resp = await client.get(url, headers=self.headers)
+            resp = await client.get(url)
             resp.raise_for_status()
             return resp.json()
         except Exception as e:
@@ -99,7 +97,7 @@ class RiotUser:
 
 async def async_main():
     # Context manager handles the session lifecycle (opening/closing connection)
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(headers={"X-Riot-Token": RIOT_API_KEY}) as client:
         # 1. Initialize User (Fetching PUUID)
         print("Fetching User...")
         user = await RiotUser.create(client, "Bawlstranglers", "2014", "europe")
