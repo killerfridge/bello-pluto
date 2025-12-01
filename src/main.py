@@ -114,7 +114,7 @@ async def async_main():
         stats = await user.get_match_data(client, match_ids)
 
         # 4. Print results
-        import pandas as pd  # Optional: just to make it look nice in console
+        import pandas as pd
 
         df = pd.DataFrame(stats)
         print(df.to_string())
